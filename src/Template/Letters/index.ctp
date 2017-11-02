@@ -49,7 +49,7 @@
     //echo $this->Form->input('reference');
     // Match the search param in your table configuration
     echo $this->Form->input('q');
-    echo $this->Form->input('tag_id', ['options' => $tags,'multiple'=>true, 'id'=>'valeurstag']);
+    echo $this->Form->input('tag_id', ['options' => $tags,'multiple'=>true, 'id'=>'valeurstag','type' => 'hidden']);
   ?>
 
   <label for="receiver">Tags</label>
