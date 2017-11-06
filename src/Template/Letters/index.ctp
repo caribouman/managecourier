@@ -5,25 +5,17 @@
         <li><?= $this->Html->link(__('List Tags'), ['controller' => 'Tags', 'action' => 'index']) ?></li>
         <li><?= $this->Html->link(__('New Tag'), ['controller' => 'Tags', 'action' => 'add']) ?></li>
 
-
+        <li>Tags List for Filter</li>
         <div class="tags_depot" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">
             <ul class="tags-list">
                 <?php
                 //print_r($tags);
                 //print_r($tag_id);
                 foreach ($tags as $key=>$tag):
-                    if (!isset($tag_id)) {
-                        ?>
+                    if (!in_array($key,$tag_ids)) {
 
-                        <li id="<?= $tag ?>" value="<?= $key ?>" draggable="true" ondragstart="drag(event)"
-                            ondragover="allowDrop(event)" ondrop="drop(event)">
-                            <div class="tags"><?= $tag ?></div>
-                        </li>
-                        <?php
-
-                    } elseif (!in_array($key, $tag_id)) {
-
-
+                        //debug($tag);
+                       // debug($tag_ids);
 
                             ?>
 
@@ -49,7 +41,7 @@
     //echo $this->Form->input('reference');
     // Match the search param in your table configuration
     echo $this->Form->input('q');
-    echo $this->Form->input('tag_id', ['options' => $tags,'multiple'=>true, 'id'=>'valeurstag','type' => 'hidden']);
+    echo $this->Form->input('tags._ids', ['options' => $tags, 'multiple'=>true, 'id'=>'valeurstag','type'=>'hidden']);
   ?>
 
   <label for="receiver">Tags</label>
@@ -57,10 +49,11 @@
             <ul class="tags-list">
                 <?php
                 //print_r($tags);
-                //print_r($tag_id);
+                //debug($tag_ids);
                 foreach ($tags as $key=>$tag):
-                    if (isset($tag_id)){
-                        if (in_array($key, $tag_id)) {
+                    //if (isset($tag_ids)){
+
+                        if (in_array($key,$tag_ids)) {
                             ?>
 
                          <li id="<?= $tag ?>" value="<?= $key ?>" draggable="true" ondragstart="drag(event)"
@@ -71,7 +64,7 @@
 
                         <?php
                         }
-                    }
+                   // }
 
 
                 endforeach; ?>
@@ -138,29 +131,33 @@
 
         var listes=receiver.getElementsByTagName('li');
 
-        var input = document.getElementById('valeurstag');
-        var options= input.getElementsByTagName('option');
-
+        var selectiontags = document.getElementById('valeurstag');
 
         //reinit select
-        for (var i = 0, c = options.length ; i < c ; i++) {
+        var reponse = new Array();
 
 
-            options[i].selected=false;
 
-        }
+
+        //
+
+
+
 
         for (var i = 0, c = listes.length ; i < c ; i++) {
 
-
-            options[listes[i].value-1].selected=true;
+            reponse.push(listes[i].value);
 
         }
-
+        //$("#valeurstag").val(reponse);
+        selectiontags.value=reponse;
+        //alert(reponse);
 
         document.getElementById('filter').click();
 
     }
+
+
 
 
 $(function() {

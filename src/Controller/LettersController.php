@@ -45,7 +45,7 @@ class LettersController extends AppController
     public function beforeFilter(Event $event)
 {
     //parent::beforeFilter($event);
-	$this->Security->config('unlockedActions', ['add']);
+	$this->Security->config('unlockedActions', ['add','index']);
 	
 }
 
@@ -61,8 +61,8 @@ class LettersController extends AppController
             ->find('search', ['search' => $this->request->query])
             // You can add extra things to the query if you need to
             ;
-        //debug($this->request->data('tag_id'));
-
+        //debug($this->request->data('tags._ids'));
+        $tag_ids=explode(',',$this->request->data('tags._ids'));
         $this->set('letters', $this->paginate($query));
 
 
@@ -74,7 +74,7 @@ class LettersController extends AppController
 
         //print_r($tags2);
         $this->set(compact( 'tags'));
-        $this->set('tag_id',$this->request->data('tag_id'));
+        $this->set('tag_ids',$tag_ids);
 
        
     }

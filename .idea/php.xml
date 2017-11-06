@@ -34,11 +34,11 @@
       <path value="$PROJECT_DIR$/vendor/josegonzalez/cakephp-upload" />
       <path value="$PROJECT_DIR$/vendor/ruflin/elastica" />
       <path value="$PROJECT_DIR$/vendor/mobiledetect/mobiledetectlib" />
-      <path value="$PROJECT_DIR$/vendor/aura/installer-default" />
       <path value="$PROJECT_DIR$/vendor/enyo/dropzone" />
       <path value="$PROJECT_DIR$/vendor/friendsofcake/search" />
       <path value="$PROJECT_DIR$/vendor/aura/intl" />
       <path value="$PROJECT_DIR$/vendor/friendsofcake/cakepdf" />
+      <path value="$PROJECT_DIR$/vendor/aura/installer-default" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="5.5.0" />

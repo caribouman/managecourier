@@ -93,12 +93,12 @@ class LettersTable extends Table
         $search = new Manager($this);
 
         $search->value('letter_id')
-            ->add('tag_id', 'Search.Callback',
+            ->add('tags._ids', 'Search.Callback',
             [
                 'callback' => function (Query $query, array $args, Callback $type) {
-
-                    $nombretags=count($args['tag_id']);
-
+                    $tag_ids=explode(',',$args['tags._ids']);
+                    $nombretags=count( $tag_ids);
+                    debug($tag_ids);
                     switch ($nombretags) {
                         case 1:
 
@@ -109,35 +109,35 @@ class LettersTable extends Table
                             //INNER JOIN letters_tags AS at2 ON (l.id = at2.letter_id)
                             //INNER JOIN tags AS t2 ON (t2.id = at2.tag_id AND t2.id = 1)
                             return $query->matching('Tags', function ($q) use ($args) {
-                                return $q->where(['Tags.id' => $args['tag_id'][0]]);
+                                return $q->where(['Tags.id' => $args['tags._ids']]);
                             });
                             break;
                         case 2:
                             return $query->innerJoin(['at1'=>'letters_tags'],[
                                 'Letters.id = at1.letter_id'])->innerJoin(['t1'=>'tags'],["t1.id = at1.tag_id",
-                                "t1.id =". $args['tag_id'][0]])->innerJoin(['at2'=>'letters_tags'],[
+                                "t1.id =". $tag_ids[0]])->innerJoin(['at2'=>'letters_tags'],[
                                 'Letters.id = at2.letter_id'])->innerJoin(['t2'=>'tags'],["t2.id = at2.tag_id",
-                                "t2.id =". $args['tag_id'][1]]);
+                                "t2.id =". $tag_ids[1]]);
                             break;
                         case 3:
                             return $query->innerJoin(['at1'=>'letters_tags'],[
                                 'Letters.id = at1.letter_id'])->innerJoin(['t1'=>'tags'],["t1.id = at1.tag_id",
-                                "t1.id =". $args['tag_id'][0]])->innerJoin(['at2'=>'letters_tags'],[
+                                "t1.id =". $tag_ids[0]])->innerJoin(['at2'=>'letters_tags'],[
                                 'Letters.id = at2.letter_id'])->innerJoin(['t2'=>'tags'],["t2.id = at2.tag_id",
-                                "t2.id =". $args['tag_id'][1]])->innerJoin(['at3'=>'letters_tags'],[
+                                "t2.id =". $tag_ids[1]])->innerJoin(['at3'=>'letters_tags'],[
                                 'Letters.id = at3.letter_id'])->innerJoin(['t3'=>'tags'],["t3.id = at3.tag_id",
-                                "t3.id =". $args['tag_id'][2]]);
+                                "t3.id =". $tag_ids[2]]);
                             break;
                         case 4:
                             return $query->innerJoin(['at1'=>'letters_tags'],[
                                 'Letters.id = at1.letter_id'])->innerJoin(['t1'=>'tags'],["t1.id = at1.tag_id",
-                                "t1.id =". $args['tag_id'][0]])->innerJoin(['at2'=>'letters_tags'],[
+                                "t1.id =". $tag_ids[0]])->innerJoin(['at2'=>'letters_tags'],[
                                 'Letters.id = at2.letter_id'])->innerJoin(['t2'=>'tags'],["t2.id = at2.tag_id",
-                                "t2.id =". $args['tag_id'][1]])->innerJoin(['at3'=>'letters_tags'],[
+                                "t2.id =". $tag_ids[1]])->innerJoin(['at3'=>'letters_tags'],[
                                 'Letters.id = at3.letter_id'])->innerJoin(['t3'=>'tags'],["t3.id = at3.tag_id",
-                                "t3.id =". $args['tag_id'][2]])->innerJoin(['at4'=>'letters_tags'],[
+                                "t3.id =". $tag_ids[2]])->innerJoin(['at4'=>'letters_tags'],[
                                 'Letters.id = at4.letter_id'])->innerJoin(['t4'=>'tags'],["t4.id = at4.tag_id",
-                                "t4.id =". $args['tag_id'][3]]);
+                                "t4.id =". $tag_ids[3]]);
                             break;
                     }
 
