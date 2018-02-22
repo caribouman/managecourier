@@ -63,15 +63,14 @@ class LettersTable extends Table
                ;
 
 
-        $this->hasOne('answer', [
-            'className' => 'Letters',
-        ]);
+           $this->hasOne('answer', [
+               'className' => 'Letters',
+           ]);
 
 
-        $this->belongsTo('parentLetter',[
-            'foreignKey' => 'parent_id',
-            'className'=>'Letters',
-            'joinType' => 'LEFT']);
+           $this->belongsTo('parentLetter',[
+               'foreignKey' => 'parent_id',
+               'className'=>'Letters']);
 
         $this->belongsToMany('Tags', [
             'foreignKey' => 'letter_id',
@@ -98,7 +97,7 @@ class LettersTable extends Table
                 'callback' => function (Query $query, array $args, Callback $type) {
                     $tag_ids=explode(',',$args['tags._ids']);
                     $nombretags=count( $tag_ids);
-                    debug($tag_ids);
+                   // debug($tag_ids);
                     switch ($nombretags) {
                         case 1:
 
@@ -212,7 +211,8 @@ class LettersTable extends Table
     {
         //debug($value);
         //debug( (in_array('1',$value['_ids'])|| in_array('2',$value['_ids'])));
-        return (in_array('1',$value['_ids'])|| in_array('2',$value['_ids']));
+        //return (in_array('1',$value['_ids'])|| in_array('2',$value['_ids']));
+        return true;
     }
 
 	 public function buildRules(RulesChecker $rules){

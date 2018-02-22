@@ -38,7 +38,7 @@ $cakeDescription = 'CakePHP: the rapid development php framework';
 	echo $this->Html->css('dropzone'); 
 	echo $this->Html->css('jquery.tag-editor.css');
 	echo $this->Html->script('dropzone');
-	
+    echo $this->Html->script('selectize');
 	echo $this->Html->script('caret');
 	echo $this->Html->script('tageditor/jquery.tag-editor.js');
 	

@@ -128,7 +128,7 @@ class LettersController extends AppController
 						$this->Flash->success(__('The letter has been saved.'));
 
                         $withoutExt = preg_replace('/\\.[^.\\s]{3,4}$/', '', $letter['file']);
-                        $commande='"C:\Program Files\ImageMagick-7.0.3-Q16\convert.exe" "G:\WAMP64\WWW\simpleged\webroot\files\Letters\file\\'.$letter['file'].'[0]" -colorspace RGB -geometry 200 "G:\WAMP64\WWW\simpleged\webroot\files\Letters\file\\'.$withoutExt.'.png"  2>&1';
+                        $commande='"C:\Program Files\ImageMagick-7.0.3-Q16\convert.exe" "G:\WAMP64\WWW\managecourier\webroot\files\Letters\file\\'.$letter['file'].'[0]" -colorspace RGB -geometry 200 "G:\WAMP64\WWW\managecourier\webroot\files\Letters\file\\'.$withoutExt.'.png"  2>&1';
                         //debug($commande);
                         shell_exec('cd "C:\Program Files\ImageMagick-7.0.3-Q16" & C:  &'. $commande.' 2>&1');
 
