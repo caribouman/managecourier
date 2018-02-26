@@ -4,9 +4,7 @@
         <li><?= $this->Html->link(__('Edit Letter'), ['action' => 'edit', $letter->id]) ?> </li>
         <li><?= $this->Form->postLink(__('Delete Letter'), ['action' => 'delete', $letter->id], ['confirm' => __('Are you sure you want to delete # {0}?', $letter->id)]) ?> </li>
         <li><?= $this->Html->link(__('List Letters'), ['action' => 'index']) ?> </li>
-        <li><?= $this->Html->link(__('New Letter'), ['action' => 'add']) ?> </li>
-        <li><?= $this->Html->link(__('List Tags'), ['controller' => 'Tags', 'action' => 'index']) ?> </li>
-        <li><?= $this->Html->link(__('New Tag'), ['controller' => 'Tags', 'action' => 'add']) ?> </li>
+
     </ul>
 </nav>
 <div class="letters view large-9 medium-8 columns content">

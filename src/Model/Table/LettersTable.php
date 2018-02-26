@@ -79,6 +79,16 @@ class LettersTable extends Table
         ]);
 
 
+        $this->belongsTo('Contacts',[
+            'className' => 'Contacts',
+            'foreignKey' => 'emetteur_id'
+        ]);
+
+
+        $this->belongsTo('Destinataires', [
+            'className' => 'Contacts',
+            'foreignKey' => 'destinataire_id'
+        ]);
 
 
 
@@ -183,7 +193,12 @@ class LettersTable extends Table
             ->requirePresence('reference', 'create')
             ->notEmpty('reference');
 
-
+        $validator
+            ->requirePresence('emetteur_id', 'create')
+            ->notEmpty('emetteur_id');
+        $validator
+            ->requirePresence('destinataire_id', 'create')
+            ->notEmpty('destinataire_id');
 
         $validator
             ->add('tags', 'validTag', [

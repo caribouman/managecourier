@@ -2,7 +2,9 @@
     <ul class="side-nav">
         <li class="heading"><?= __('Actions') ?></li>
         <li><?= $this->Html->link(__('New Letter'), ['action' => 'add']) ?></li>
-        <li><?= $this->Html->link(__('New Tag'), ['controller' => 'Tags', 'action' => 'add']) ?></li>
+        <li><?= $this->Html->link(__('Manage Tags'), ['controller' => 'Tags', 'action' => 'index']) ?></li>
+        <li><?= $this->Html->link(__('Manage Contacts'), ['controller' => 'Contacts','action' => 'index']) ?></li>
+        <li><?= $this->Html->link(__('Manage Users'), ['controller' => 'Users','action' => 'index']) ?></li>
 
         <li>Tags List for Filter</li>
         <div class="tags_depot" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)">
@@ -39,7 +41,7 @@
   //echo $this->Form->input('letter_id');
     //echo $this->Form->input('reference');
     // Match the search param in your table configuration
-    echo $this->Form->input('q');
+    echo $this->Form->input('q',['label'=>'search reference']);
     echo $this->Form->input('tags._ids', ['options' => $tags, 'multiple'=>true, 'id'=>'valeurstag','type'=>'hidden']);
   ?>
 
@@ -82,6 +84,8 @@
             <tr>
                 <th scope="col"><?= $this->Paginator->sort('id') ?></th>
                 <th scope="col"><?= $this->Paginator->sort('reference') ?></th>
+                <th scope="col"><?= $this->Paginator->sort('emetteur') ?></th>
+                <th scope="col"><?= $this->Paginator->sort('destinataire') ?></th>
                 <th scope="col"><?= $this->Paginator->sort('created') ?></th>
                 <th scope="col" class="actions"><?= __('Actions') ?></th>
             </tr>
@@ -91,6 +95,8 @@
             <tr>
                 <td><?= $this->Number->format($letter->id) ?></td>
                 <td><?= h($letter->reference) ?></td>
+                <td><?= h($letter->contact->name) ?></td>
+                <td><?= h($letter->destinataire->name) ?></td>
                 <td><?= h($letter->created) ?></td>
                 <td class="actions">
                     <?= $this->Html->link(__('View'), ['action' => 'view', $letter->id]) ?>

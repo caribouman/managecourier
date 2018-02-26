@@ -26,13 +26,15 @@
         <legend><?= __('Add Letter') ?></legend>
         <?= $this->Form->input('id',['type' => 'hidden']);?>
         <?= $this->Form->input('reference');?>
+        <?= $this->Form->input('emetteur_id',['options' => $liste_contacts,'empty' => true]);?>
+        <?= $this->Form->input('destinataire_id',['options' => $liste_contacts,'empty' => true]);?>
         <?= $this->Form->input('tags._ids', ['options' => $tags, 'multiple'=>true, 'id'=>'valeurstag']);?>
         <label for="receiver">Tags</label>
         <div id="receiver" class="tags_depot" ondragstart="drag(event)" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
         <?= $this->Form->input('date_letter',['dateFormat' => 'DDMMYYYY',
                                               'templates' => ['dateWidget' => '<div class="clearfix">{{day}}<span class="spacer-date">/</span>{{month}}<span class="spacer-date">/</span>{{year}}</div>',
         ]]);?>
-        
+        <?= $this->Form->label('Answer Of');?>
         <?= $this->Form->select('parent_id', $letters,['empty' => true]);?>
 		<?= $this->Form->input('file',['type' => 'file']);?>
         <?= $this->Form->input('letterFileDir', ['type' => 'hidden']); ?>

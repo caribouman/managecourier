@@ -58,7 +58,7 @@ class LettersController extends AppController
         $query = $this->Letters
             // Use the plugins 'search' custom finder and pass in the
             // processed query params
-            ->find('search', ['search' => $this->request->query])
+            ->find('search', ['search' => $this->request->query,'contain'=>['Contacts','Destinataires']])
             // You can add extra things to the query if you need to
             ;
         //debug($this->request->data('tags._ids'));
@@ -142,8 +142,10 @@ class LettersController extends AppController
         }
         
 		$tags = $this->Letters->Tags->find('list', ['limit' => 200]);
-		$this->set('_serialize', ['letter']);
+        $this->set('_serialize', ['letter']);
         $this->set(compact('letter', 'tags'));
+        $listecontacts = $this->Letters->Contacts->find('list', ['limit' => 200]);
+        $this->set('liste_contacts', $listecontacts);
         $this->set('liste_tags', $liste_tags);
         $this->set('letters', $this->Letters->find('list',
             [ 'keyField' => 'id', 'valueField' => 'reference' ]));

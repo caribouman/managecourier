@@ -18,7 +18,7 @@
         <legend><?= __('Edit Tag') ?></legend>
         <?php
             echo $this->Form->input('name');
-            echo $this->Form->input('letters._ids', ['options' => $letters]);
+            //echo $this->Form->input('letters._ids', ['options' => $letters]);
         ?>
     </fieldset>
     <?= $this->Form->button(__('Submit')) ?>
