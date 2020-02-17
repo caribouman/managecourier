@@ -6,7 +6,7 @@
 -- Généré le :  Lun 26 Février 2018 à 10:09
 -- Version du serveur :  5.7.14
 -- Version de PHP :  7.0.10
-
+USE managecourier;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
@@ -98,6 +98,9 @@ CREATE TABLE `users` (
   `modified` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
+
+INSERT INTO `users` (`id`, `Username`,`Password`, `Role`) VALUES
+(1, 'admin', '$2y$10$FuaVgEMeRnbmrD2yBUKwreKcaaASlxeRZf3jIgIEm.Q7vBhVE2r72','admin');
 --
 -- Index pour les tables exportées
 --

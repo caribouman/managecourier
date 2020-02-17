@@ -17,7 +17,7 @@
         "friendsofcake/search": "^2.3",
         "xety/cake3-upload": "1.*",
         "cakemanager/cakephp-utils": "dev-master",
-        "friendsofcake/CakePdf": "^3.2",
+        "friendsofcake/cakepdf": "^3.2",
         "dereuromark/cakephp-tinyauth": "^1.6"
     },
     "require-dev": {
