@@ -25,6 +25,7 @@ services:
     # we mount a datavolume to make sure we don't loose data
     volumes:
        - mariadb_data:/var/lib/mysql
+       - ./simpleged.sql:/docker-entrypoint-initdb.d/dump.sql
     # setting some envvars to create the DB
     environment:
       - MYSQL_ROOT_PASSWORD=root
