@@ -14,7 +14,6 @@
  */
 namespace Bake\Shell\Task;
 
-use Cake\Console\Shell;
 use Cake\Core\App;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
@@ -25,6 +24,7 @@ use Cake\Utility\Inflector;
 /**
  * The Plugin Task handles creating an empty plugin, ready to be used
  *
+ * @property \Bake\Shell\Task\BakeTemplateTask $BakeTemplate
  */
 class PluginTask extends BakeTask
 {
@@ -43,6 +43,13 @@ class PluginTask extends BakeTask
     public $tasks = [
         'Bake.BakeTemplate'
     ];
+
+    /**
+     * Plugin path.
+     *
+     * @var string
+     */
+    public $path;
 
     /**
      * initialize
@@ -69,7 +76,9 @@ class PluginTask extends BakeTask
 
             return false;
         }
-        $plugin = $this->_camelize($name);
+        $parts = explode('/', $name);
+        $plugin = implode('/', array_map([$this, '_camelize'], $parts));
+
         $pluginPath = $this->_pluginPath($plugin);
         if (is_dir($pluginPath)) {
             $this->out(sprintf('Plugin: %s already exists, no action taken', $plugin));
@@ -131,6 +140,11 @@ class PluginTask extends BakeTask
     protected function _modifyBootstrap($plugin, $hasAutoloader)
     {
         $bootstrap = new File($this->bootstrap, false);
+        if (!$bootstrap->exists()) {
+            $this->err('<warning>Could not update application bootstrap.php file, as it could not be found.</warning>');
+
+            return;
+        }
         $contents = $bootstrap->read();
         if (!preg_match("@\n\s*Plugin::loadAll@", $contents)) {
             $autoload = $hasAutoloader ? null : "'autoload' => true, ";
@@ -191,12 +205,13 @@ class PluginTask extends BakeTask
         do {
             $templatesPath = array_shift($paths) . 'Bake/Plugin';
             $templatesDir = new Folder($templatesPath);
-            $templates = $templatesDir->findRecursive('.*\.ctp');
+            $templates = $templatesDir->findRecursive('.*\.(twig|ctp)');
         } while (!$templates);
 
         sort($templates);
         foreach ($templates as $template) {
             $template = substr($template, strrpos($template, 'Plugin') + 7, -4);
+            $template = rtrim($template, '.');
             $this->_generateFile($template, $root);
         }
     }
@@ -243,7 +258,7 @@ class PluginTask extends BakeTask
 
         $this->out('<info>Modifying composer autoloader</info>');
 
-        $out = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+        $out = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
         $this->createFile($file, $out);
 
         $composer = $this->findComposer();
@@ -313,6 +328,7 @@ class PluginTask extends BakeTask
             return;
         }
 
+        $choice = null;
         while (!$valid) {
             foreach ($pathOptions as $i => $option) {
                 $this->out($i + 1 . '. ' . $option);
@@ -334,7 +350,7 @@ class PluginTask extends BakeTask
     public function getOptionParser()
     {
         $parser = parent::getOptionParser();
-        $parser->description(
+        $parser->setDescription(
             'Create the directory structure, AppController class and testing setup for a new plugin. ' .
             'Can create plugins in any of your bootstrapped plugin paths.'
         )->addArgument('name', [

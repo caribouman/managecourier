@@ -10,6 +10,8 @@ use TinyAuth\Auth\AuthUserTrait;
 
 /**
  * TinyAuth component to handle all authorization.
+ *
+ * @property \Cake\Controller\Component\AuthComponent $Auth
  */
 class AuthUserComponent extends Component {
 
@@ -33,10 +35,11 @@ class AuthUserComponent extends Component {
 
 	/**
 	 * @param \Cake\Event\Event $event
-	 * @return \Cake\Network\Response|null
+	 * @return \Cake\Http\Response|null
 	 */
 	public function beforeRender(Event $event) {
-		$controller = $event->subject();
+		/** @var \Cake\Controller\Controller $controller */
+		$controller = $event->getSubject();
 
 		$authUser = $this->_getUser();
 		$controller->set('_authUser', $authUser);
@@ -47,10 +50,11 @@ class AuthUserComponent extends Component {
 	 * @return bool
 	 */
 	public function hasAccess(array $url) {
+		$params = $this->request->getAttribute('params');
 		$url += [
-			'prefix' => !empty($this->request->params['prefix']) ? $this->request->params['prefix'] : null,
-			'plugin' => !empty($this->request->params['plugin']) ? $this->request->params['plugin'] : null,
-			'controller' => $this->request->params['controller'],
+			'prefix' => !empty($params['prefix']) ? $params['prefix'] : null,
+			'plugin' => !empty($params['plugin']) ? $params['plugin'] : null,
+			'controller' => $params['controller'],
 			'action' => 'index',
 		];
 

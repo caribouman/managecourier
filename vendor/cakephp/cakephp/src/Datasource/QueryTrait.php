@@ -1,22 +1,23 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Datasource;
 
 use BadMethodCallException;
 use Cake\Collection\Iterator\MapReduce;
 use Cake\Datasource\Exception\RecordNotFoundException;
+use Cake\Datasource\ResultSetDecorator;
 
 /**
  * Contains the characteristics for an object that is attached to a repository and
@@ -28,7 +29,7 @@ trait QueryTrait
     /**
      * Instance of a table object this query is bound to
      *
-     * @var \Cake\Datasource\RepositoryInterface
+     * @var \Cake\ORM\Table|\Cake\Datasource\RepositoryInterface
      */
     protected $_repository;
 
@@ -37,7 +38,7 @@ trait QueryTrait
      *
      * When set, query execution will be bypassed.
      *
-     * @var \Cake\Datasource\ResultSetInterface
+     * @var \Cake\Datasource\ResultSetInterface|null
      * @see \Cake\Datasource\QueryTrait::setResult()
      */
     protected $_results;
@@ -54,7 +55,7 @@ trait QueryTrait
      * List of formatter classes or callbacks that will post-process the
      * results when fetched
      *
-     * @var array
+     * @var callable[]
      */
     protected $_formatters = [];
 
@@ -87,8 +88,8 @@ trait QueryTrait
      * When called with a Table argument, the default table object will be set
      * and this query object will be returned for chaining.
      *
-     * @param \Cake\Datasource\RepositoryInterface|null $table The default table object to use
-     * @return \Cake\Datasource\RepositoryInterface|$this
+     * @param \Cake\Datasource\RepositoryInterface|\Cake\ORM\Table|null $table The default table object to use
+     * @return \Cake\Datasource\RepositoryInterface|\Cake\ORM\Table|$this
      */
     public function repository(RepositoryInterface $table = null)
     {
@@ -110,7 +111,7 @@ trait QueryTrait
      * This method is most useful when combined with results stored in a persistent cache.
      *
      * @param \Cake\Datasource\ResultSetInterface $results The results this query should return.
-     * @return $this The query instance.
+     * @return $this
      */
     public function setResult($results)
     {
@@ -166,7 +167,7 @@ trait QueryTrait
      *   When using a function, this query instance will be supplied as an argument.
      * @param string|\Cake\Cache\CacheEngine $config Either the name of the cache config to use, or
      *   a cache config instance.
-     * @return $this This instance
+     * @return $this
      */
     public function cache($key, $config = 'default')
     {
@@ -181,9 +182,20 @@ trait QueryTrait
     }
 
     /**
+     * Returns the current configured query `_eagerLoaded` value
+     *
+     * @return bool
+     */
+    public function isEagerLoaded()
+    {
+        return $this->_eagerLoaded;
+    }
+
+    /**
      * Sets the query instance to be an eager loaded query. If no argument is
      * passed, the current configured query `_eagerLoaded` value is returned.
      *
+     * @deprecated 3.5.0 Use isEagerLoaded() for the getter part instead.
      * @param bool|null $value Whether or not to eager load.
      * @return $this|\Cake\ORM\Query
      */
@@ -219,7 +231,7 @@ trait QueryTrait
         }
 
         if (!$alias) {
-            $alias = $this->repository()->alias();
+            $alias = $this->repository()->getAlias();
         }
 
         $key = sprintf('%s__%s', $alias, $field);
@@ -265,7 +277,7 @@ trait QueryTrait
      */
     public function all()
     {
-        if (isset($this->_results)) {
+        if ($this->_results !== null) {
             return $this->_results;
         }
 
@@ -393,7 +405,7 @@ trait QueryTrait
      * $singleUser = $query->select(['id', 'username'])->first();
      * ```
      *
-     * @return mixed the first result from the ResultSet
+     * @return \Cake\Datasource\EntityInterface|array|null The first result from the ResultSet.
      */
     public function first()
     {
@@ -408,18 +420,19 @@ trait QueryTrait
      * Get the first result from the executing query or raise an exception.
      *
      * @throws \Cake\Datasource\Exception\RecordNotFoundException When there is no first record.
-     * @return mixed The first result from the ResultSet.
+     * @return \Cake\Datasource\EntityInterface|array The first result from the ResultSet.
      */
     public function firstOrFail()
     {
         $entity = $this->first();
-        if ($entity) {
-            return $entity;
+        if (!$entity) {
+            throw new RecordNotFoundException(sprintf(
+                'Record not found in table "%s"',
+                $this->repository()->table()
+            ));
         }
-        throw new RecordNotFoundException(sprintf(
-            'Record not found in table "%s"',
-            $this->repository()->table()
-        ));
+
+        return $entity;
     }
 
     /**
@@ -456,7 +469,7 @@ trait QueryTrait
         if (in_array($method, get_class_methods($resultSetClass))) {
             $results = $this->all();
 
-            return call_user_func_array([$results, $method], $arguments);
+            return $results->$method(...$arguments);
         }
         throw new BadMethodCallException(
             sprintf('Unknown method "%s"', $method)
@@ -468,7 +481,7 @@ trait QueryTrait
      * This is handy for passing all query clauses at once.
      *
      * @param array $options the options to be applied
-     * @return $this This object
+     * @return $this
      */
     abstract public function applyOptions(array $options);
 
@@ -514,6 +527,6 @@ trait QueryTrait
      */
     protected function _decoratorClass()
     {
-        return 'Cake\Datasource\ResultSetDecorator';
+        return ResultSetDecorator::class;
     }
 }

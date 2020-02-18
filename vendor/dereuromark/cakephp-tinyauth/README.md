@@ -2,13 +2,15 @@
 
 [![Build Status](https://api.travis-ci.org/dereuromark/cakephp-tinyauth.svg?branch=master)](https://travis-ci.org/dereuromark/cakephp-tinyauth)
 [![Latest Stable Version](https://poser.pugx.org/dereuromark/cakephp-tinyauth/v/stable.svg)](https://packagist.org/packages/dereuromark/cakephp-tinyauth)
-[![Coverage Status](https://coveralls.io/repos/dereuromark/cakephp-tinyauth/badge.svg)](https://coveralls.io/r/dereuromark/cakephp-tinyauth)
-[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.5-8892BF.svg)](https://php.net/)
+[![Coverage Status](https://img.shields.io/codecov/c/github/dereuromark/cakephp-tinyauth/master.svg)](https://codecov.io/github/dereuromark/cakephp-tinyauth?branch=master)
+[![Minimum PHP Version](http://img.shields.io/badge/php-%3E%3D%205.6-8892BF.svg)](https://php.net/)
 [![License](https://poser.pugx.org/dereuromark/cakephp-tinyauth/license.svg)](https://packagist.org/packages/dereuromark/cakephp-tinyauth)
 [![Total Downloads](https://poser.pugx.org/dereuromark/cakephp-tinyauth/d/total.svg)](https://packagist.org/packages/dereuromark/cakephp-tinyauth)
 [![Coding Standards](https://img.shields.io/badge/cs-PSR--2--R-yellow.svg)](https://github.com/php-fig-rectified/fig-rectified-standards)
 
-A CakePHP 3.x plugin to handle authentication and user authorization the easy way.
+A CakePHP plugin to handle authentication and user authorization the easy way.
+
+**This branch is for CakePHP 3.5+**
 
 ## Features
 ### Authentication
@@ -43,8 +45,9 @@ See http://sandbox.dereuromark.de/auth-sandbox
 Define the public actions (accessable by anyone) per controller:
 ```ini
 Users = index,view
-admin/Maintenance = pingcheck
+admin/Maintenance = pingCheck
 PluginName.SomeController = *
+MyPlugin.api/V1 = *
 ```
 
 ### acl.ini
@@ -56,6 +59,9 @@ add,edit = user,mod
 
 [admin/Users]
 * = admin
+
+[Translate.admin/Languages]]
+* = *
 ```
 
 ### AuthUser component and helper
@@ -64,7 +70,7 @@ $currentId = $this->AuthUser->id();
 
 $isMe = $this->AuthUser->isMe($userEntity->id);
 
-if ($this->AuthUser->hasRole('mod') {
+if ($this->AuthUser->hasRole('mod')) {
 } 
 
 if ($this->AuthUser->hasAccess(['action' => 'secretArea'])) {

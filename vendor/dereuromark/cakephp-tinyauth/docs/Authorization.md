@@ -9,6 +9,7 @@ based access control (RBAC) to your application.
 - DB (dynamic) or Configure based role definition
 - INI file (static) based access rights (controller-action/role setup)
 - Lightweight and incredibly fast
+- Syncing Command for acl INI file
 
 Do NOT use if
 - you need ROW based access
@@ -197,6 +198,9 @@ view, edit = user
 You can specify multiple paths in your config, e.g. when you have plugins and separated the definitions across them.
 Make sure you are using each section key only once, though. The first definition will be kept and all others for the same section key are ignored.
 
+## Adapters
+By default INI files and the IniAdapter will be used.
+See [AuthorizationAdapter](AuthorizationAdapter.md) for how to change the strategy and maybe build your own adapter solution.
 
 ## Caching
 
@@ -234,11 +238,12 @@ prefixes|array|A list of authorizeByPrefix handled prefixes.
 allowUser|bool|True will give authenticated users access to all resources except those using the `adminPrefix`
 adminPrefix|string|Name of the prefix used for admin pages. Defaults to admin.
 autoClearCache|bool|True will generate a new ACL cache file every time.
-filePath|string|Full path to the acl.ini. Can also be an array of multiple paths. Defaults to `ROOT . DS . 'config' . DS`.
-file|string|Name of the INI file. Defaults to `acl.ini`.
 cache|string|Cache type. Defaults to `_cake_core_`.
-cacheKey|string|Cache key. Defaults to `tiny_auth_acl`.
-
+aclCacheKey|string|Cache key. Defaults to `tiny_auth_acl`.
+aclFilePath|string|Full path to the acl.ini. Can also be an array of multiple paths. Defaults to `ROOT . DS . 'config' . DS`.
+aclFile|string|Name of the INI file. Defaults to `acl.ini`.
+includeAuthentication|bool|Set to true to include public auth access into hasAccess() checks. Note, that this requires Configure configuration.
+allowCacheKey|string|Cache key. Defaults to `tiny_auth_allow`. Needed to fetch allow info from the correct cache. Must be the same as set in AuthComponent.
 
 ## AuthUserComponent
 Add the AuthUserComponent and you can easily check permissions inside your controller scope:
@@ -256,7 +261,7 @@ if ($this->AuthUser->hasAccess(['action' => 'forModeratorOnly'])) {
 
 Or if that person is of a certain role in general:
 ```php
-if ($this->AuthUser->hasRole('mod') { // Either by alias or id
+if ($this->AuthUser->hasRole('mod')) { // Either by alias or id
 	// OK, do something now
 }
 ```
@@ -301,12 +306,35 @@ if ($this->AuthUser->hasAccess(['action' => 'secretArea'])) {
 }
 ```
 
+## Including Authentication
+Please note that by default `hasAccess()` only checks the ACL INI, not the allow auth INI.
+Those links and access checks are meant to be used for logged in users.
+
+If you need to build a navigation that includes publicly accessible actions, you need to enable
+`includeAuthentication` config. This will then also include the Authentication data from your allow config.
+But this only checks/uses the INI config, it can not work on controller authentication. So make sure
+you transformed everything fully to the INI file here. Any custom `->allow()` call in controllers
+can not be taken into account.
+
+
+## Sync Command
+The plugin offers a convenience CLI command (CakePHP 3.6+) to sync ACL for any new controller.
+It will automatically skip controllers that are whitelisted as public (non authenticated).
+In a future version this could also be broken down to action level.
+
+```
+bin/cake tiny_auth_sync {your default roles, comma separated}
+```
+This will then add any missing controller with `* = ...` for all actions and you can then manually fine-tune.
+
+Use with `-d -v` to just output the changes it would do to your ACL INI file.
+
 ## Tips
 
 ### Use constants instead of magic strings
 If you are using the `hasRole()` or `hasRoles()` checks with a DB roles table, it is always better to use the aliases than the IDs (as the IDs can change).
 But even so, it is better not to use magic strings like `'moderator'`, but define constants in your bootstrap for each:
-````php
+```php
 // In your bootstrap
 define('ROLE_MOD', 'moderator');
 

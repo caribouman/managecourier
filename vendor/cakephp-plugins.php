@@ -13,6 +13,7 @@ return [
         'SuperUpload' => $baseDir . '/plugins/SuperUpload/',
         'TinyAuth' => $baseDir . '/vendor/dereuromark/cakephp-tinyauth/',
         'Utils' => $baseDir . '/vendor/cakemanager/cakephp-utils/',
+        'WyriHaximus/TwigView' => $baseDir . '/vendor/wyrihaximus/twig-view/',
         'Xety/Cake3Upload' => $baseDir . '/vendor/xety/cake3-upload/'
     ]
 ];

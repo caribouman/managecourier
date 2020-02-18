@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\ORM\Behavior;
 
@@ -73,7 +73,7 @@ class TimestampBehavior extends Behavior
     public function initialize(array $config)
     {
         if (isset($config['events'])) {
-            $this->config('events', $config['events'], false);
+            $this->setConfig('events', $config['events'], false);
         }
     }
 
@@ -82,13 +82,13 @@ class TimestampBehavior extends Behavior
      *
      * @param \Cake\Event\Event $event Event instance.
      * @param \Cake\Datasource\EntityInterface $entity Entity instance.
-     * @throws \UnexpectedValueException if a field's value is incorrectly defined
-     * @return true (irrespective of the behavior logic, the save will not be prevented)
+     * @throws \UnexpectedValueException if a field's when value is misdefined
+     * @return bool Returns true irrespective of the behavior logic, the save will not be prevented.
      * @throws \UnexpectedValueException When the value for an event is not 'always', 'new' or 'existing'
      */
     public function handleEvent(Event $event, EntityInterface $entity)
     {
-        $eventName = $event->name();
+        $eventName = $event->getName();
         $events = $this->_config['events'];
 
         $new = $entity->isNew() !== false;
@@ -132,7 +132,7 @@ class TimestampBehavior extends Behavior
      *
      * @param \DateTime|null $ts Timestamp
      * @param bool $refreshTimestamp If true timestamp is refreshed.
-     * @return \Cake\I18n\Time
+     * @return \DateTime
      */
     public function timestamp(DateTime $ts = null, $refreshTimestamp = false)
     {
@@ -172,7 +172,7 @@ class TimestampBehavior extends Behavior
         foreach ($events[$eventName] as $field => $when) {
             if (in_array($when, ['always', 'existing'])) {
                 $return = true;
-                $entity->dirty($field, false);
+                $entity->setDirty($field, false);
                 $this->_updateField($entity, $field, $refresh);
             }
         }
@@ -190,7 +190,7 @@ class TimestampBehavior extends Behavior
      */
     protected function _updateField($entity, $field, $refreshTimestamp)
     {
-        if ($entity->dirty($field)) {
+        if ($entity->isDirty($field)) {
             return;
         }
         $entity->set($field, $this->timestamp(null, $refreshTimestamp));

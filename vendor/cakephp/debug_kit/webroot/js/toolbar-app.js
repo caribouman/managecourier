@@ -122,7 +122,7 @@ Toolbar.prototype = {
   },
 
   loadPanel: function(id) {
-    var url = this.baseUrl + 'debug_kit/panels/view/' + id;
+    var url = this.baseUrl + 'debug-kit/panels/view/' + id;
     var contentArea = this.content.find('#panel-content');
     var _this = this;
     var timer;
@@ -220,6 +220,15 @@ Toolbar.prototype = {
 
   mouseListener: function() {
     var _this = this;
+    this.toolbar.find('.panel-button-left').on('click', function(e) {
+      _this.scroll('left');
+      return false;
+    });
+    this.toolbar.find('.panel-button-right').on('click', function(e) {
+      _this.scroll('right');
+      return false;
+    });
+
     this.panelButtons.on('click', function(e) {
       _this.panelButtons.removeClass('panel-active');
       e.preventDefault();
@@ -241,14 +250,6 @@ Toolbar.prototype = {
       _this.toggle();
       return false;
     });
-    this.toolbar.find('.panel-button-left').on('click', function(e) {
-      _this.scroll('left');
-      return false;
-    });
-    this.toolbar.find('.panel-button-right').on('click', function(e) {
-      _this.scroll('right');
-      return false;
-    });
 
     this.panelClose.on('click', function(e) {
       _this.hideContent();
@@ -266,7 +267,7 @@ Toolbar.prototype = {
   },
 
   onMessage: function(event) {
-    if (event.data.indexOf('ajax-completed$$') === 0) {
+    if (typeof(event.data) === 'string' && event.data.indexOf('ajax-completed$$') === 0) {
       this.onRequest(JSON.parse(event.data.split('$$')[1]));
     }
   },
@@ -294,7 +295,7 @@ Toolbar.prototype = {
     if (direction === 'left' && lastButton.offset().left + buttonWidth < cakeButton.offset().left) {
       return;
     }
-    var css = {left: operator + scrollValue}
+    var css = {left: operator + scrollValue};
     $('.toolbar-inner li', this.button).animate(css)
   },
 
