@@ -99,8 +99,9 @@ CREATE TABLE `users` (
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 
-INSERT INTO `users` (`id`, `Username`,`Password`, `Role`) VALUES
-(1, 'admin', '$2y$10$FuaVgEMeRnbmrD2yBUKwreKcaaASlxeRZf3jIgIEm.Q7vBhVE2r72','admin');
+INSERT INTO managecourier.users
+(id, username, password, `role`, created, modified)
+VALUES(1, 'admin', '$2y$10$FuaVgEMeRnbmrD2yBUKwreKcaaASlxeRZf3jIgIEm.Q7vBhVE2r72', 'admin', now(), now());
 --
 -- Index pour les tables exportées
 --

@@ -16,19 +16,20 @@ services:
       - .:/var/www/html/
     environment:
       - SECURITY_SALT=ashjg23697sds97139871298ashk  
-      - MYSQL_URL=mysql
-      - MYSQL_USERNAME=root
-      - MYSQL_PASSWORD=root
+      - MYSQL_URL=mariadb
   mariadb:
     # we use the mysql base image, version 5.6.36
     image: mariadb:latest
     # we mount a datavolume to make sure we don't loose data
     volumes:
        - mariadb_data:/var/lib/mysql
-       - ./simpleged.sql:/docker-entrypoint-initdb.d/dump.sql
+       - ./simpleged.sql:/docker-entrypoint-initdb.d/simpleged.sql
     # setting some envvars to create the DB
     environment:
-      - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=managecourier
+      - MYSQL_USER=managecourier
+      - MYSQL_PASSWORD=achanger01
+      - MYSQL_ROOT_PASSWORD=root
+      
 volumes:
     mariadb_data:
