@@ -7,6 +7,9 @@ use Cake\Core\Exception\Exception;
 use Cake\Datasource\ResultSetInterface;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
+use InvalidArgumentException;
+use TinyAuth\Auth\AclAdapter\AclAdapterInterface;
+use TinyAuth\Auth\AclAdapter\IniAclAdapter;
 use TinyAuth\Utility\Utility;
 
 trait AclTrait {
@@ -27,10 +30,21 @@ trait AclTrait {
 	protected $_userRoles = null;
 
 	/**
+	 * @var \TinyAuth\Auth\AclAdapter\AclAdapterInterface|null
+	 */
+	protected $_aclAdapter = null;
+
+	/**
+	 * @var array|null
+	 */
+	protected $auth = null;
+
+	/**
 	 * @return array
 	 */
 	protected function _defaultConfig() {
 		$defaults = [
+			'aclAdapter' => IniAclAdapter::class,
 			'idColumn' => 'id', // ID Column in users table
 			'roleColumn' => 'role_id', // Foreign key for the Role ID in users table or in pivot table
 			'userColumn' => 'user_id', // Foreign key for the User id in pivot table. Only for multi-roles setup
@@ -47,10 +61,12 @@ trait AclTrait {
 			'allowUser' => false, // enable to allow ALL roles access to all actions except prefixed with 'adminPrefix'
 			'adminPrefix' => 'admin', // name of the admin prefix route (only used when allowUser is enabled)
 			'cache' => '_cake_core_',
-			'cacheKey' => 'tiny_auth_acl',
+			'aclCacheKey' => 'tiny_auth_acl',
+			'allowCacheKey' => 'tiny_auth_allow', // This is needed to fetch allow info from the correct cache. Must be the same as set in AuthComponent.
 			'autoClearCache' => null, // Set to true to delete cache automatically in debug mode, keep null for auto-detect
-			'filePath' => null, // Possible to locate INI file at given path e.g. Plugin::configPath('Admin')
-			'file' => 'acl.ini',
+			'aclFilePath' => null, // Possible to locate INI file at given path e.g. Plugin::configPath('Admin'), filePath is also available for shared config
+			'aclFile' => 'acl.ini',
+			'includeAuthentication' => false, // Set to true to include public auth access into hasAccess() checks. Note, that this requires Configure configuration.
 		];
 		$config = (array)Configure::read('TinyAuth') + $defaults;
 
@@ -75,8 +91,42 @@ trait AclTrait {
 		if ($config['autoClearCache'] === null) {
 			$config['autoClearCache'] = Configure::read('debug');
 		}
+		$this->_aclAdapter = $this->_loadAclAdapter($config['aclAdapter']);
+
+		if ($this->getConfig('cacheKey')) {
+			$this->setConfig('aclCacheKey', $this->getConfig('cacheKey'));
+		}
+		if ($this->getConfig('file')) {
+			$this->setConfig('aclFile', $this->getConfig('file'));
+		}
+		if ($this->getConfig('filePath')) {
+			$this->setConfig('aclFilePath', $this->getConfig('filePath'));
+		}
 
 		return $config;
+	}
+
+	/**
+	 * Finds the Acl adapter to use for this request.
+	 *
+	 * @param string $adapter Acl adapter to load.
+	 * @return \TinyAuth\Auth\AclAdapter\AclAdapterInterface
+	 * @throws \Cake\Core\Exception\Exception
+	 * @throws \InvalidArgumentException
+	 */
+	protected function _loadAclAdapter($adapter) {
+		if (!class_exists($adapter)) {
+			throw new Exception(sprintf('The Acl Adapter class "%s" was not found.', $adapter));
+		}
+
+		$adapterInstance = new $adapter();
+		if (!($adapterInstance instanceof AclAdapterInterface)) {
+			throw new InvalidArgumentException(sprintf(
+				'TinyAuth Acl adapters have to implement %s.', AclAdapterInterface::class
+			));
+		}
+
+		return $adapterInstance;
 	}
 
 	/**
@@ -90,30 +140,34 @@ trait AclTrait {
 	 * @throws \Cake\Core\Exception\Exception
 	 */
 	protected function _check(array $user, array $params) {
+		if ($this->getConfig('includeAuthentication') && $this->_isPublic($params)) {
+			return true;
+		}
+
 		if (!$user) {
 			return false;
 		}
 
-		if ($this->config('superAdmin')) {
-			$superAdminColumn = $this->config('superAdminColumn');
+		if ($this->getConfig('superAdmin')) {
+			$superAdminColumn = $this->getConfig('superAdminColumn');
 			if (!$superAdminColumn) {
-				$superAdminColumn = $this->config('idColumn');
+				$superAdminColumn = $this->getConfig('idColumn');
 			}
 			if (!isset($user[$superAdminColumn])) {
 				throw new Exception('Missing super Admin Column in user table');
 			}
-			if ($user[$superAdminColumn] === $this->config('superAdmin')) {
+			if ($user[$superAdminColumn] === $this->getConfig('superAdmin')) {
 				return true;
 			}
 		}
 
 		// Give any logged in user access to ALL actions when `allowUser` is
 		// enabled except when the `adminPrefix` is being used.
-		if ($this->config('allowUser')) {
+		if ($this->getConfig('allowUser')) {
 			if (empty($params['prefix'])) {
 				return true;
 			}
-			if ($params['prefix'] !== $this->config('adminPrefix')) {
+			if ($params['prefix'] !== $this->getConfig('adminPrefix')) {
 				return true;
 			}
 		}
@@ -122,8 +176,8 @@ trait AclTrait {
 
 		// Allow access to all prefixed actions for users belonging to
 		// the specified role that matches the prefix.
-		if ($this->config('authorizeByPrefix') && !empty($params['prefix'])) {
-			if (in_array($params['prefix'], $this->config('prefixes'))) {
+		if ($this->getConfig('authorizeByPrefix') && !empty($params['prefix'])) {
+			if (in_array($params['prefix'], $this->getConfig('prefixes'))) {
 				$roles = $this->_getAvailableRoles();
 				$role = isset($roles[$params['prefix']]) ? $roles[$params['prefix']] : null;
 				if ($role && in_array($role, $userRoles)) {
@@ -133,16 +187,16 @@ trait AclTrait {
 		}
 
 		// Allow logged in super admins access to all resources
-		if ($this->config('superAdminRole')) {
+		if ($this->getConfig('superAdminRole')) {
 			foreach ($userRoles as $userRole) {
-				if ((string)$userRole === (string)$this->config('superAdminRole')) {
+				if ((string)$userRole === (string)$this->getConfig('superAdminRole')) {
 					return true;
 				}
 			}
 		}
 
 		if ($this->_acl === null) {
-			$this->_acl = $this->_getAcl($this->config('filePath'));
+			$this->_acl = $this->_getAcl($this->getConfig('aclFilePath'));
 		}
 
 		// Allow access if user has a role with wildcard access to the resource
@@ -171,6 +225,58 @@ trait AclTrait {
 	}
 
 	/**
+	 * @param array $params
+	 *
+	 * @return bool
+	 */
+	protected function _isPublic(array $params) {
+		$authentication = $this->_getAuth();
+
+		foreach ($authentication as $rule) {
+			if ($params['plugin'] && $params['plugin'] !== $rule['plugin']) {
+				continue;
+			}
+			if (!empty($params['prefix']) && $params['prefix'] !== $rule['prefix']) {
+				continue;
+			}
+			if ($params['controller'] !== $rule['controller']) {
+				continue;
+			}
+
+			if ($rule['actions'] === []) {
+				return true;
+			}
+
+			return in_array($params['action'], $rule['actions']);
+		}
+
+		return false;
+	}
+
+	/**
+	 * Hack to get the auth data here for hasAccess().
+	 * We re-use the cached data for performance reasons.
+	 *
+	 * @return array
+	 * @throws \Cake\Core\Exception\Exception
+	 */
+	protected function _getAuth() {
+		if ($this->auth) {
+			return $this->auth;
+		}
+
+		$authAllow = Cache::read($this->getConfig('allowCacheKey'), $this->getConfig('cache'));
+		if (!$authAllow) {
+			//TOOD make refactor to collect data at runtime? Should not be necessary if AuthComponent is used properly.
+			throw new Exception('Cache for Authentication data not found. This is required for `includeAuthentication` as true. Make sure you enabled TinyAuth.AuthComponent.');
+		}
+
+		$this->auth = $authAllow;
+
+		return $authAllow;
+	}
+
+	/**
 	 * Parses INI file and returns the allowed roles per action.
 	 *
 	 * Uses cache for maximum performance.
@@ -182,85 +288,38 @@ trait AclTrait {
 	 * @return array Roles
 	 */
 	protected function _getAcl($path = null) {
-		if ($this->config('autoClearCache') && Configure::read('debug')) {
-			Cache::delete($this->config('cacheKey'), $this->config('cache'));
+		if ($this->getConfig('autoClearCache') && Configure::read('debug')) {
+			Cache::delete($this->getConfig('aclCacheKey'), $this->getConfig('cache'));
 		}
-		$roles = Cache::read($this->config('cacheKey'), $this->config('cache'));
+		$roles = Cache::read($this->getConfig('aclCacheKey'), $this->getConfig('cache'));
 		if ($roles !== false) {
 			return $roles;
 		}
 
-		$iniArray = $this->_parseFiles($path, $this->config('file'));
-		$availableRoles = $this->_getAvailableRoles();
-
-		$res = [];
-		foreach ($iniArray as $key => $array) {
-			$res[$key] = Utility::deconstructIniKey($key);
-			$res[$key]['map'] = $array;
-
-			foreach ($array as $actions => $roles) {
-				// Get all roles used in the current INI section
-				$roles = explode(',', $roles);
-				$actions = explode(',', $actions);
-
-				foreach ($roles as $roleId => $role) {
-					$role = trim($role);
-					if (!$role) {
-						continue;
-					}
-					// Prevent undefined roles appearing in the iniMap
-					if (!array_key_exists($role, $availableRoles) && $role !== '*') {
-						unset($roles[$roleId]);
-						continue;
-					}
-					if ($role === '*') {
-						unset($roles[$roleId]);
-						$roles = array_merge($roles, array_keys($availableRoles));
-					}
-				}
-
-				foreach ($actions as $action) {
-					$action = trim($action);
-					if (!$action) {
-						continue;
-					}
-
-					foreach ($roles as $role) {
-						$role = trim($role);
-						if (!$role || $role === '*') {
-							continue;
-						}
-
-						// Lookup role id by name in roles array
-						$newRole = $availableRoles[strtolower($role)];
-						$res[$key]['actions'][$action][] = $newRole;
-					}
-				}
-			}
+		if ($path === null) {
+			$path = $this->getConfig('aclFilePath');
 		}
+		$config = $this->getConfig();
+		$config['filePath'] = $path;
+		$config['file'] = $config['aclFile'];
+		unset($config['aclFilePath']);
+		unset($config['aclFile']);
 
-		Cache::write($this->config('cacheKey'), $res, $this->config('cache'));
-		return $res;
+		$roles = $this->_aclAdapter->getAcl($this->_getAvailableRoles(), $config);
+		Cache::write($this->getConfig('aclCacheKey'), $roles, $this->getConfig('cache'));
+
+		return $roles;
 	}
 
 	/**
-	 * Returns the acl.ini file(s) as an array.
+	 * Returns the found INI file(s) as an array.
 	 *
-	 * @param array|string|null $paths Paths to look for INI file
-	 * @param string $file Full path to the INI file
-	 * @return array List with all available roles
+	 * @param array|string|null $paths Paths to look for INI files.
+	 * @param string $file INI file name.
+	 * @return array List with all found files.
 	 */
 	protected function _parseFiles($paths, $file) {
-		if ($paths === null) {
-			$paths = ROOT . DS . 'config' . DS;
-		}
-
-		$list = [];
-		foreach ((array)$paths as $path) {
-			$list += Utility::parseFile($path . $file);
-		}
-
-		return $list;
+		return Utility::parseFiles($paths, $file);
 	}
 
 	/**
@@ -304,27 +363,27 @@ trait AclTrait {
 			return $this->_roles;
 		}
 
-		$roles = Configure::read($this->_config['rolesTable']);
+		$roles = Configure::read($this->getConfig('rolesTable'));
 		if (is_array($roles)) {
-			if ($this->config('superAdminRole')) {
-				$key = $this->config('superAdmin') ?: 'superadmin';
-				$roles[$key] = $this->config('superAdminRole');
+			if ($this->getConfig('superAdminRole')) {
+				$key = $this->getConfig('superAdmin') ?: 'superadmin';
+				$roles[$key] = $this->getConfig('superAdminRole');
 			}
 			return $roles;
 		}
 
-		$rolesTable = TableRegistry::get($this->_config['rolesTable']);
+		$rolesTable = TableRegistry::get($this->getConfig('rolesTable'));
 		$roles = $rolesTable->find()->formatResults(function (ResultSetInterface $results) {
-			return $results->combine($this->_config['aliasColumn'], 'id');
+			return $results->combine($this->getConfig('aliasColumn'), 'id');
 		})->toArray();
 
-		if ($this->config('superAdminRole')) {
-			$key = $this->config('superAdmin') ?: 'superadmin';
-			$roles[$key] = $this->config('superAdminRole');
+		if ($this->getConfig('superAdminRole')) {
+			$key = $this->getConfig('superAdmin') ?: 'superadmin';
+			$roles[$key] = $this->getConfig('superAdminRole');
 		}
 
 		if (count($roles) < 1) {
-			throw new Exception('Invalid TinyAuth role setup (roles table `' . $this->_config['rolesTable'] . '` has no roles)');
+			throw new Exception('Invalid TinyAuth role setup (roles table `' . $this->getConfig('rolesTable') . '` has no roles)');
 		}
 
 		$this->_roles = $roles;
@@ -346,19 +405,19 @@ trait AclTrait {
 	 */
 	protected function _getUserRoles($user) {
 		// Single-role from session
-		if (!$this->_config['multiRole']) {
-			if (!array_key_exists($this->_config['roleColumn'], $user)) {
-				throw new Exception(sprintf('Missing TinyAuth role id field (%s) in user session', 'Auth.User.' . $this->_config['roleColumn']));
+		if (!$this->getConfig('multiRole')) {
+			if (!array_key_exists($this->getConfig('roleColumn'), $user)) {
+				throw new Exception(sprintf('Missing TinyAuth role id field (%s) in user session', 'Auth.User.' . $this->getConfig('roleColumn')));
 			}
-			if (!isset($user[$this->_config['roleColumn']])) {
+			if (!isset($user[$this->getConfig('roleColumn')])) {
 				return [];
 			}
-			return $this->_mapped([$user[$this->_config['roleColumn']]]);
+			return $this->_mapped([$user[$this->getConfig('roleColumn')]]);
 		}
 
 		// Multi-role from session
-		if (isset($user[$this->_config['rolesTable']])) {
-			$userRoles = $user[$this->_config['rolesTable']];
+		if (isset($user[$this->getConfig('rolesTable')])) {
+			$userRoles = $user[$this->getConfig('rolesTable')];
 			if (isset($userRoles[0]['id'])) {
 				$userRoles = Hash::extract($userRoles, '{n}.id');
 			}
@@ -366,10 +425,10 @@ trait AclTrait {
 		}
 
 		// Multi-role from session via pivot table
-		$pivotTableName = $this->_config['pivotTable'];
+		$pivotTableName = $this->getConfig('pivotTable');
 		if (!$pivotTableName) {
-			list(, $rolesTableName) = pluginSplit($this->_config['rolesTable']);
-			list(, $usersTableName) = pluginSplit($this->_config['usersTable']);
+			list(, $rolesTableName) = pluginSplit($this->getConfig('rolesTable'));
+			list(, $usersTableName) = pluginSplit($this->getConfig('usersTable'));
 			$tables = [
 				$usersTableName,
 				$rolesTableName
@@ -379,14 +438,14 @@ trait AclTrait {
 		}
 		if (isset($user[$pivotTableName])) {
 			$userRoles = $user[$pivotTableName];
-			if (isset($userRoles[0][$this->_config['roleColumn']])) {
-				$userRoles = Hash::extract($userRoles, '{n}.' . $this->_config['roleColumn']);
+			if (isset($userRoles[0][$this->getConfig('roleColumn')])) {
+				$userRoles = Hash::extract($userRoles, '{n}.' . $this->getConfig('roleColumn'));
 			}
 			return $this->_mapped((array)$userRoles);
 		}
 
 		// Multi-role from DB: load the pivot table
-		$roles = $this->_getRolesFromDb($pivotTableName, $user[$this->_config['idColumn']]);
+		$roles = $this->_getRolesFromDb($pivotTableName, $user[$this->getConfig('idColumn')]);
 		if (!$roles) {
 			return [];
 		}
@@ -405,10 +464,10 @@ trait AclTrait {
 		}
 
 		$pivotTable = TableRegistry::get($pivotTableName);
-		$roleColumn = $this->_config['roleColumn'];
+		$roleColumn = $this->getConfig('roleColumn');
 		$roles = $pivotTable->find()
 			->select($roleColumn)
-			->where([$this->_config['userColumn'] => $id])
+			->where([$this->getConfig('userColumn') => $id])
 			->all()
 			->extract($roleColumn)
 			->toArray();

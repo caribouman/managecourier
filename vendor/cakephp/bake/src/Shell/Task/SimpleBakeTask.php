@@ -19,6 +19,9 @@ use Cake\Utility\Inflector;
 
 /**
  * Base class for simple bake tasks code generator.
+ *
+ * @property \Bake\Shell\Task\BakeTemplateTask $BakeTemplate
+ * @property \Bake\Shell\Task\TestTask $Test
  */
 abstract class SimpleBakeTask extends BakeTask
 {
@@ -132,7 +135,7 @@ abstract class SimpleBakeTask extends BakeTask
     {
         $parser = parent::getOptionParser();
         $name = $this->name();
-        $parser->description(
+        $parser->setDescription(
             sprintf('Bake a %s class file.', $name)
         )->addArgument('name', [
             'help' => sprintf(

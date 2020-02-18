@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\View\Helper;
 
@@ -21,7 +21,7 @@ use Cake\Utility\Inflector;
 use Cake\View\Helper;
 
 /**
- * UrlHelper class for generating urls.
+ * UrlHelper class for generating URLs.
  */
 class UrlHelper extends Helper
 {
@@ -35,7 +35,7 @@ class UrlHelper extends Helper
      *    escaped afterwards before being displayed.
      * - `fullBase`: If true, the full base URL will be prepended to the result
      *
-     * @param string|array|null $url Either a relative string url like `/products/view/23` or
+     * @param string|array|null $url Either a relative string URL like `/products/view/23` or
      *    an array of URL parameters. Using an array for URLs will allow you to leverage
      *    the reverse routing features of CakePHP.
      * @param array|bool $options Array of options; bool `full` for BC reasons.
@@ -144,7 +144,7 @@ class UrlHelper extends Helper
             return $this->build($path, !empty($options['fullBase']));
         }
         if (strpos($path, '://') !== false || preg_match('/^[a-z]+:/i', $path)) {
-            return $path;
+            return ltrim($this->build($path), '/');
         }
         if (!array_key_exists('plugin', $options) || $options['plugin'] !== false) {
             list($plugin, $path) = $this->_View->pluginSplit($path, false);
@@ -159,7 +159,7 @@ class UrlHelper extends Helper
             $path .= $options['ext'];
         }
         if (preg_match('|^([a-z0-9]+:)?//|', $path)) {
-            return $path;
+            return $this->build($path);
         }
         if (isset($plugin)) {
             $path = Inflector::underscore($plugin) . '/' . $path;
@@ -203,24 +203,22 @@ class UrlHelper extends Helper
         $timestampEnabled = $stamp === 'force' || ($stamp === true && Configure::read('debug'));
         if ($timestampEnabled && strpos($path, '?') === false) {
             $filepath = preg_replace(
-                '/^' . preg_quote($this->request->webroot, '/') . '/',
+                '/^' . preg_quote($this->request->getAttribute('webroot'), '/') . '/',
                 '',
                 urldecode($path)
             );
             $webrootPath = WWW_ROOT . str_replace('/', DIRECTORY_SEPARATOR, $filepath);
             if (file_exists($webrootPath)) {
-                //@codingStandardsIgnoreStart
-                return $path . '?' . @filemtime($webrootPath);
-                //@codingStandardsIgnoreEnd
+                return $path . '?' . filemtime($webrootPath);
             }
             $segments = explode('/', ltrim($filepath, '/'));
             $plugin = Inflector::camelize($segments[0]);
             if (Plugin::loaded($plugin)) {
                 unset($segments[0]);
                 $pluginPath = Plugin::path($plugin) . 'webroot' . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $segments);
-                //@codingStandardsIgnoreStart
-                return $path . '?' . @filemtime($pluginPath);
-                //@codingStandardsIgnoreEnd
+                if (file_exists($pluginPath)) {
+                    return $path . '?' . filemtime($pluginPath);
+                }
             }
         }
 
@@ -237,7 +235,7 @@ class UrlHelper extends Helper
     {
         $asset = explode('?', $file);
         $asset[1] = isset($asset[1]) ? '?' . $asset[1] : null;
-        $webPath = $this->request->webroot . $asset[0];
+        $webPath = $this->request->getAttribute('webroot') . $asset[0];
         $file = $asset[0];
 
         if (!empty($this->theme)) {
@@ -249,12 +247,12 @@ class UrlHelper extends Helper
             }
 
             if (file_exists(Configure::read('App.wwwRoot') . $theme . $file)) {
-                $webPath = $this->request->webroot . $theme . $asset[0];
+                $webPath = $this->request->getAttribute('webroot') . $theme . $asset[0];
             } else {
                 $themePath = Plugin::path($this->theme);
                 $path = $themePath . 'webroot/' . $file;
                 if (file_exists($path)) {
-                    $webPath = $this->request->webroot . $theme . $asset[0];
+                    $webPath = $this->request->getAttribute('webroot') . $theme . $asset[0];
                 }
             }
         }

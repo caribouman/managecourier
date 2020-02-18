@@ -38,12 +38,17 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
             'Xety\\Cake3Upload\\' => 17,
             'XdgBaseDir\\' => 11,
         ),
+        'W' => 
+        array (
+            'WyriHaximus\\TwigView\\' => 21,
+        ),
         'U' => 
         array (
             'Utils\\' => 6,
         ),
         'T' => 
         array (
+            'Twig\\' => 5,
             'TinyAuth\\' => 9,
         ),
         'S' => 
@@ -88,6 +93,7 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
             'JsonSchema\\' => 11,
             'Josegonzalez\\Upload\\Test\\Fixture\\' => 33,
             'Josegonzalez\\Upload\\' => 20,
+            'Jasny\\Twig\\' => 11,
             'JakubOnderka\\PhpConsoleHighlighter\\' => 35,
             'JakubOnderka\\PhpConsoleColor\\' => 29,
         ),
@@ -126,9 +132,10 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         ),
         'A' => 
         array (
-            'Aura\\Intl\\_Config\\' => 18,
+            'Aura\\Intl\\' => 10,
             'App\\Test\\' => 9,
             'App\\' => 4,
+            'Ajgl\\Twig\\Extension\\' => 20,
         ),
     );
 
@@ -145,9 +152,17 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         array (
             0 => __DIR__ . '/..' . '/dnoegel/php-xdg-base-dir/src',
         ),
+        'WyriHaximus\\TwigView\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/wyrihaximus/twig-view/src',
+        ),
         'Utils\\' => 
         array (
             0 => __DIR__ . '/..' . '/cakemanager/cakephp-utils/src',
+        ),
+        'Twig\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/twig/twig/src',
         ),
         'TinyAuth\\' => 
         array (
@@ -253,6 +268,10 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         array (
             0 => __DIR__ . '/..' . '/josegonzalez/cakephp-upload/src',
         ),
+        'Jasny\\Twig\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/jasny/twig-extensions/src',
+        ),
         'JakubOnderka\\PhpConsoleHighlighter\\' => 
         array (
             0 => __DIR__ . '/..' . '/jakub-onderka/php-console-highlighter/src',
@@ -333,9 +352,9 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         array (
             0 => __DIR__ . '/..' . '/cakephp/bake/src',
         ),
-        'Aura\\Intl\\_Config\\' => 
+        'Aura\\Intl\\' => 
         array (
-            0 => __DIR__ . '/..' . '/aura/intl/config',
+            0 => __DIR__ . '/..' . '/aura/intl/src',
         ),
         'App\\Test\\' => 
         array (
@@ -345,9 +364,31 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
+        'Ajgl\\Twig\\Extension\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/ajgl/breakpoint-twig-extension/src',
+        ),
+    );
+
+    public static $fallbackDirsPsr4 = array (
+        0 => __DIR__ . '/..' . '/asm89/twig-cache-extension/lib',
     );
 
     public static $prefixesPsr0 = array (
+        'U' => 
+        array (
+            'Umpirsky\\' => 
+            array (
+                0 => __DIR__ . '/..' . '/umpirsky/twig-php-function/src',
+            ),
+        ),
+        'T' => 
+        array (
+            'Twig_' => 
+            array (
+                0 => __DIR__ . '/..' . '/twig/twig/lib',
+            ),
+        ),
         'D' => 
         array (
             'Detection' => 
@@ -357,13 +398,9 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         ),
         'A' => 
         array (
-            'Aura\\Intl' => 
+            'Aptoma' => 
             array (
-                0 => __DIR__ . '/..' . '/aura/intl/src',
-            ),
-            'Aura\\Composer\\' => 
-            array (
-                0 => __DIR__ . '/..' . '/aura/installer-default/src',
+                0 => __DIR__ . '/..' . '/aptoma/twig-markdown/src',
             ),
         ),
     );
@@ -378,6 +415,7 @@ class ComposerStaticInitae5a35060cf16ad4f048f619852c266e
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInitae5a35060cf16ad4f048f619852c266e::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInitae5a35060cf16ad4f048f619852c266e::$prefixDirsPsr4;
+            $loader->fallbackDirsPsr4 = ComposerStaticInitae5a35060cf16ad4f048f619852c266e::$fallbackDirsPsr4;
             $loader->prefixesPsr0 = ComposerStaticInitae5a35060cf16ad4f048f619852c266e::$prefixesPsr0;
             $loader->classMap = ComposerStaticInitae5a35060cf16ad4f048f619852c266e::$classMap;
 

@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         2.2.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\Validation;
 
@@ -26,7 +26,7 @@ use IteratorAggregate;
  *
  * Implements ArrayAccess to easily modify rules in the set
  *
- * @link http://book.cakephp.org/3.0/en/core-libraries/validation.html
+ * @link https://book.cakephp.org/3.0/en/core-libraries/validation.html
  */
 class Validator implements ArrayAccess, IteratorAggregate, Countable
 {
@@ -51,6 +51,13 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * @var array
      */
     protected $_providers = [];
+
+    /**
+     * An associative array of objects or classes used as a default provider list
+     *
+     * @var array
+     */
+    protected static $_defaultProviders = [];
 
     /**
      * Contains the validation messages associated with checking the presence
@@ -82,6 +89,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     public function __construct()
     {
         $this->_useI18n = function_exists('__d');
+        $this->_providers = self::$_defaultProviders;
     }
 
     /**
@@ -179,28 +187,95 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * deciding whether a validation rule can be applied. All validation methods,
      * when called will receive the full list of providers stored in this validator.
      *
+     * @param string $name The name under which the provider should be set.
+     * @param object|string $object Provider object or class name.
+     * @return $this
+     */
+    public function setProvider($name, $object)
+    {
+        $this->_providers[$name] = $object;
+
+        return $this;
+    }
+
+    /**
+     * Returns the provider stored under that name if it exists.
+     *
+     * @param string $name The name under which the provider should be set.
+     * @return object|string|null
+     */
+    public function getProvider($name)
+    {
+        if (isset($this->_providers[$name])) {
+            return $this->_providers[$name];
+        }
+        if ($name !== 'default') {
+            return null;
+        }
+
+        $this->_providers[$name] = new RulesProvider();
+
+        return $this->_providers[$name];
+    }
+
+    /**
+     * Returns the default provider stored under that name if it exists.
+     *
+     * @param string $name The name under which the provider should be retrieved.
+     * @return object|string|null
+     */
+    public static function getDefaultProvider($name)
+    {
+        if (!isset(self::$_defaultProviders[$name])) {
+            return null;
+        }
+
+        return self::$_defaultProviders[$name];
+    }
+
+    /**
+     * Associates an object to a name so it can be used as a default provider.
+     *
+     * @param string $name The name under which the provider should be set.
+     * @param object|string $object Provider object or class name.
+     * @return void
+     */
+    public static function addDefaultProvider($name, $object)
+    {
+        self::$_defaultProviders[$name] = $object;
+    }
+
+    /**
+     * Get the list of default providers.
+     *
+     * @return array
+     */
+    public static function getDefaultProviders()
+    {
+        return array_keys(self::$_defaultProviders);
+    }
+
+    /**
+     * Associates an object to a name so it can be used as a provider. Providers are
+     * objects or class names that can contain methods used during validation of for
+     * deciding whether a validation rule can be applied. All validation methods,
+     * when called will receive the full list of providers stored in this validator.
+     *
      * If called with no arguments, it will return the provider stored under that name if
      * it exists, otherwise it returns this instance of chaining.
      *
+     * @deprecated 3.4.0 Use setProvider()/getProvider() instead.
      * @param string $name The name under which the provider should be set.
      * @param null|object|string $object Provider object or class name.
      * @return $this|object|string|null
      */
     public function provider($name, $object = null)
     {
-        if ($object === null) {
-            if (isset($this->_providers[$name])) {
-                return $this->_providers[$name];
-            }
-            if ($name === 'default') {
-                return $this->_providers[$name] = new RulesProvider();
-            }
-
-            return null;
+        if ($object !== null) {
+            return $this->setProvider($name, $object);
         }
-        $this->_providers[$name] = $object;
 
-        return $this;
+        return $this->getProvider($name);
     }
 
     /**
@@ -349,7 +424,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                 return false;
             }
             foreach ($this->providers() as $provider) {
-                $validator->provider($provider, $this->provider($provider));
+                $validator->setProvider($provider, $this->getProvider($provider));
             }
             $errors = $validator->errors($value, $context['newRecord']);
 
@@ -384,7 +459,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
                 return false;
             }
             foreach ($this->providers() as $provider) {
-                $validator->provider($provider, $this->provider($provider));
+                $validator->setProvider($provider, $this->getProvider($provider));
             }
             $errors = [];
             foreach ($value as $i => $row) {
@@ -431,7 +506,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
 
     /**
      * Sets whether a field is required to be present in data array.
-     * You can also pass array. Using an array will let you provide  the following
+     * You can also pass array. Using an array will let you provide the following
      * keys:
      *
      * - `mode` individual mode for field
@@ -1532,6 +1607,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
      * @param string|null $message The error message when the rule fails.
      * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
      *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::isArray()
      * @return $this
      */
     public function isArray($field, $message = null, $when = null)
@@ -1541,6 +1617,44 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
         return $this->add($field, 'isArray', $extra + [
                 'rule' => 'isArray'
             ]);
+    }
+
+    /**
+     * Add a validation rule to ensure that a field contains a scalar.
+     *
+     * @param string $field The field you want to apply the rule to.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::isScalar()
+     * @return $this
+     */
+    public function scalar($field, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'scalar', $extra + [
+                'rule' => 'isScalar'
+            ]);
+    }
+
+    /**
+     * Add a validation rule to ensure a field is a 6 digits hex color value.
+     *
+     * @param string $field The field you want to apply the rule to.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @see \Cake\Validation\Validation::hexColor()
+     * @return $this
+     */
+    public function hexColor($field, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'hexColor', $extra + [
+            'rule' => 'hexColor',
+        ]);
     }
 
     /**
@@ -1655,6 +1769,25 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     }
 
     /**
+     * Returns whether or not a field matches against a regular expression.
+     *
+     * @param string $field Field name.
+     * @param string $regex Regular expression.
+     * @param string|null $message The error message when the rule fails.
+     * @param string|callable|null $when Either 'create' or 'update' or a callable that returns
+     *   true when the validation rule should be applied.
+     * @return $this
+     */
+    public function regex($field, $regex, $message = null, $when = null)
+    {
+        $extra = array_filter(['on' => $when, 'message' => $message]);
+
+        return $this->add($field, 'regex', $extra + [
+            'rule' => ['custom', $regex]
+        ]);
+    }
+
+    /**
      * Returns false if any validation for the passed rule set should be stopped
      * due to the field missing in the data array
      *
@@ -1745,7 +1878,7 @@ class Validator implements ArrayAccess, IteratorAggregate, Countable
     {
         $errors = [];
         // Loading default provider in case there is none
-        $this->provider('default');
+        $this->getProvider('default');
         $message = 'The provided value is invalid';
 
         if ($this->_useI18n) {

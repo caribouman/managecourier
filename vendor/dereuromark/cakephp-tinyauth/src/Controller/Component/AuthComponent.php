@@ -11,6 +11,9 @@ use TinyAuth\Auth\AclTrait;
 
 /**
  * TinyAuth AuthComponent to handle all authentication in a central ini file.
+ *
+ * @property \Cake\Controller\Component\RequestHandlerComponent $RequestHandler
+ * @property \Cake\Controller\Component\FlashComponent $Flash
  */
 class AuthComponent extends CakeAuthComponent {
 
@@ -21,21 +24,31 @@ class AuthComponent extends CakeAuthComponent {
 	 */
 	protected $_defaultTinyAuthConfig = [
 		'cache' => '_cake_core_',
-		'cacheKey' => 'tiny_auth_allow',
 		'autoClearCache' => null, // Set to true to delete cache automatically in debug mode, keep null for auto-detect
-		'filePath' => null, // Possible to locate ini file at given path e.g. Plugin::configPath('Admin')
-		'file' => 'auth_allow.ini',
+		'allowCacheKey' => 'tiny_auth_allow',
+		'allowFilePath' => null, // Possible to locate ini file at given path e.g. Plugin::configPath('Admin'), filePath is also available for shared config
+		'allowFile' => 'auth_allow.ini',
 	];
 
 	/**
 	 * @param \Cake\Controller\ComponentRegistry $registry
 	 * @param array $config
-	 * @throws \Cake\Core\Exception\Exception
 	 */
 	public function __construct(ComponentRegistry $registry, array $config = []) {
 		$config += $this->_defaultTinyAuthConfig;
 
 		parent::__construct($registry, $config);
+
+		// BC config check
+		if ($this->getConfig('cacheKey')) {
+			$this->setConfig('allowCacheKey', $this->getConfig('cacheKey'));
+		}
+		if ($this->getConfig('file')) {
+			$this->setConfig('allowFile', $this->getConfig('file'));
+		}
+		if ($this->getConfig('filePath')) {
+			$this->setConfig('allowFilePath', $this->getConfig('filePath'));
+		}
 	}
 
 	/**
@@ -51,7 +64,7 @@ class AuthComponent extends CakeAuthComponent {
 
 	/**
 	 * @param \Cake\Event\Event $event Event instance.
-	 * @return \Cake\Network\Response|null
+	 * @return \Cake\Http\Response|null
 	 */
 	public function authCheck(Event $event) {
 		$this->_prepareAuthentication();
@@ -61,10 +74,11 @@ class AuthComponent extends CakeAuthComponent {
 
 	/**
 	 * @param \Cake\Event\Event $event
-	 * @return \Cake\Network\Response|null
+	 * @return \Cake\Http\Response|null
 	 */
 	public function beforeRender(Event $event) {
-		$controller = $event->subject();
+		/** @var \Cake\Controller\Controller $controller */
+		$controller = $event->getSubject();
 
 		$authUser = (array)$this->user();
 		$controller->set('_authUser', $authUser);
@@ -74,9 +88,9 @@ class AuthComponent extends CakeAuthComponent {
 	 * @return void
 	 */
 	protected function _prepareAuthentication() {
-		$authentication = $this->_getAuth($this->_config['filePath']);
+		$authentication = $this->_getAuth($this->getConfig('allowFilePath'));
 
-		$params = $this->request->params;
+		$params = $this->request->getAttribute('params');
 		foreach ($authentication as $rule) {
 			if ($params['plugin'] && $params['plugin'] !== $rule['plugin']) {
 				continue;
@@ -106,15 +120,18 @@ class AuthComponent extends CakeAuthComponent {
 	 * @return array Actions
 	 */
 	protected function _getAuth($path = null) {
-		if ($this->config('autoClearCache') && Configure::read('debug')) {
-			Cache::delete($this->_config['cacheKey'], $this->_config['cache']);
+		if ($this->getConfig('autoClearCache') && Configure::read('debug')) {
+			Cache::delete($this->getConfig('allowCacheKey'), $this->getConfig('cache'));
 		}
-		$roles = Cache::read($this->_config['cacheKey'], $this->_config['cache']);
+		$roles = Cache::read($this->getConfig('allowCacheKey'), $this->getConfig('cache'));
 		if ($roles !== false) {
 			return $roles;
 		}
 
-		$iniArray = $this->_parseFiles($path, $this->_config['file']);
+		if ($path === null) {
+			$path = $this->getConfig('allowFilePath');
+		}
+		$iniArray = $this->_parseFiles($path, $this->getConfig('allowFile'));
 
 		$res = [];
 		foreach ($iniArray as $key => $actions) {
@@ -138,7 +155,7 @@ class AuthComponent extends CakeAuthComponent {
 			}
 		}
 
-		Cache::write($this->_config['cacheKey'], $res, $this->_config['cache']);
+		Cache::write($this->getConfig('allowCacheKey'), $res, $this->getConfig('cache'));
 		return $res;
 	}
 

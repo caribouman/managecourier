@@ -1,16 +1,16 @@
 <?php
 /**
- * CakePHP(tm) : Rapid Development Framework (http://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
  *
  * Licensed under The MIT License
  * For full copyright and license information, please see the LICENSE.txt
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (http://cakefoundation.org)
- * @link          http://cakephp.org CakePHP(tm) Project
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
  * @since         3.0.0
- * @license       http://www.opensource.org/licenses/mit-license.php MIT License
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
  */
 namespace Cake\ORM;
 
@@ -177,16 +177,15 @@ class ResultSet implements ResultSetInterface
     {
         $repository = $query->repository();
         $this->_statement = $statement;
-        $this->_driver = $query->connection()->driver();
+        $this->_driver = $query->getConnection()->getDriver();
         $this->_defaultTable = $query->repository();
         $this->_calculateAssociationMap($query);
-        $this->_hydrate = $query->hydrate();
-        $this->_entityClass = $repository->entityClass();
-        $this->_useBuffering = $query->bufferResults();
-        $this->_defaultAlias = $this->_defaultTable->alias();
+        $this->_hydrate = $query->isHydrationEnabled();
+        $this->_entityClass = $repository->getEntityClass();
+        $this->_useBuffering = $query->isBufferedResultsEnabled();
+        $this->_defaultAlias = $this->_defaultTable->getAlias();
         $this->_calculateColumnMap($query);
-        $this->_calculateTypeMap();
-        $this->_autoFields = $query->autoFields();
+        $this->_autoFields = $query->isAutoFieldsEnabled();
 
         if ($this->_useBuffering) {
             $count = $this->count();
@@ -379,7 +378,7 @@ class ResultSet implements ResultSetInterface
      */
     protected function _calculateAssociationMap($query)
     {
-        $map = $query->eagerLoader()->associationsMap($this->_defaultTable);
+        $map = $query->getEagerLoader()->associationsMap($this->_defaultTable);
         $this->_matchingMap = (new Collection($map))
             ->match(['matching' => true])
             ->indexBy('alias')
@@ -446,7 +445,7 @@ class ResultSet implements ResultSetInterface
     protected function _getTypes($table, $fields)
     {
         $types = [];
-        $schema = $table->schema();
+        $schema = $table->getSchema();
         $map = array_keys(Type::map() + ['string' => 1, 'text' => 1, 'boolean' => 1]);
         $typeMap = array_combine(
             $map,
@@ -460,7 +459,7 @@ class ResultSet implements ResultSetInterface
         }
 
         foreach (array_intersect($fields, $schema->columns()) as $col) {
-            $typeName = $schema->columnType($col);
+            $typeName = $schema->getColumnType($col);
             if (isset($typeMap[$typeName])) {
                 $types[$col] = $typeMap[$typeName];
             }
@@ -492,7 +491,7 @@ class ResultSet implements ResultSetInterface
     /**
      * Correctly nests results keys including those coming from associations
      *
-     * @param mixed $row Array containing columns and values or false if there is no results
+     * @param array $row Array containing columns and values or false if there is no results
      * @return array Results
      */
     protected function _groupResult($row)
@@ -513,7 +512,10 @@ class ResultSet implements ResultSetInterface
                 array_intersect_key($row, $keys)
             );
             if ($this->_hydrate) {
-                $options['source'] = $matching['instance']->registryAlias();
+                /* @var \Cake\ORM\Table $table */
+                $table = $matching['instance'];
+                $options['source'] = $table->getRegistryAlias();
+                /* @var \Cake\Datasource\EntityInterface $entity */
                 $entity = new $matching['entityClass']($results['_matchingData'][$alias], $options);
                 $results['_matchingData'][$alias] = $entity;
             }
@@ -533,6 +535,7 @@ class ResultSet implements ResultSetInterface
                 continue;
             }
 
+            /* @var \Cake\ORM\Association $instance */
             $instance = $assoc['instance'];
 
             if (!$assoc['canBeJoined'] && !isset($row[$alias])) {
@@ -544,8 +547,8 @@ class ResultSet implements ResultSetInterface
                 $results[$alias] = $row[$alias];
             }
 
-            $target = $instance->target();
-            $options['source'] = $target->registryAlias();
+            $target = $instance->getTarget();
+            $options['source'] = $target->getRegistryAlias();
             unset($presentAliases[$alias]);
 
             if ($assoc['canBeJoined'] && $this->_autoFields !== false) {

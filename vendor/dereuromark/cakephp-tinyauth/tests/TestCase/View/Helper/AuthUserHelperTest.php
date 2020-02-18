@@ -2,6 +2,7 @@
 
 namespace TinyAuth\Test\TestCase\Controller\Component;
 
+use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
 use Cake\TestSuite\TestCase;
@@ -37,7 +38,7 @@ class AuthUserHelperTest extends TestCase {
 			'admin' => 3
 		]);
 		$this->config = [
-			'filePath' => Plugin::path('TinyAuth') . 'tests' . DS . 'test_files' . DS,
+			'aclFilePath' => Plugin::path('TinyAuth') . 'tests' . DS . 'test_files' . DS,
 			'autoClearCache' => true,
 		];
 		$this->View = new View();
@@ -205,36 +206,6 @@ class AuthUserHelperTest extends TestCase {
 	}
 
 	/**
-	 * ACL links are basically free, they are as fast as normal links.
-	 *
-	 * @return void
-	 */
-	public function testLinkSpeed() {
-		$this->skipIf(env('COVERALLS'));
-
-		$user = [
-			'id' => 1,
-			'role_id' => 1
-		];
-		$this->View->set('_authUser', $user);
-
-		$url = [
-			'controller' => 'Tags',
-			'action' => 'edit',
-		];
-
-		$before = microtime(true);
-
-		for ($i = 0; $i < 1000; $i++) {
-			$this->AuthUserHelper->link('Foo', $url);
-		}
-
-		$after = microtime(true);
-		$diff = round($after - $before, 4);
-		$this->assertWithinRange(0.3, $diff, 0.3, '1000 iterations should be as fast as around 0.1-0.2 sek, but are ' . number_format($diff, 2) . 'sek.');
-	}
-
-	/**
 	 * @return void
 	 */
 	public function testIsMe() {
@@ -261,11 +232,37 @@ class AuthUserHelperTest extends TestCase {
 	 * @return void
 	 */
 	public function testRoles() {
-		$this->AuthUserHelper->config('multiRole', true);
+		$this->AuthUserHelper->setConfig('multiRole', true);
 		$user = ['id' => '1', 'Roles' => ['1', '2']];
 		$this->View->set('_authUser', $user);
 
 		$this->assertSame(['user' => '1', 'moderator' => '2'], $this->AuthUserHelper->roles());
+	}
+
+	/**
+	 * @return void
+	 */
+	public function testHasAccessPublic() {
+		$this->AuthUserHelper->setConfig('includeAuthentication', true);
+		$cache = '_cake_core_';
+		$cacheKey = 'tiny_auth_allow';
+		$this->AuthUserHelper->setConfig('cache', $cache);
+		$this->AuthUserHelper->setConfig('cacheKey', $cacheKey);
+
+		$data = [
+			'Users' => [
+				'controller' => 'Users',
+				'actions' => ['view'],
+			]
+		];
+		Cache::write($cacheKey, $data, $cache);
+
+		$request = [
+			'controller' => 'Users',
+			'action' => 'view',
+		];
+		$result = $this->AuthUserHelper->hasAccess($request);
+		$this->assertTrue($result);
 	}
 
 }
